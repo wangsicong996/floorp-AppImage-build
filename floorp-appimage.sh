@@ -2,10 +2,24 @@
 
 set -ex
 
-export ARCH=$(uname -m)
+ARCH=$(uname -m)
+case "$ARCH" in
+	x86_64|aarch64)
+		;;
+	arm64)
+		ARCH="aarch64"
+		;;
+	*)
+		echo "Unsupported architecture: $ARCH" >&2
+		exit 1
+		;;
+esac
+export ARCH
+
 REPO="https://api.github.com/repos/Floorp-Projects/Floorp/releases"
-APPIMAGETOOL="https://github.com/pkgforge-dev/Anylinux-AppImages/raw/refs/heads/main/useful-tools/uruntime2appimage.sh"
-UPINFO="gh-releases-zsync|$(echo $GITHUB_REPOSITORY | tr '/' '|')|latest|*$ARCH.AppImage.zsync"
+APPIMAGETOOL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage"
+REPOSITORY="${GITHUB_REPOSITORY:-Portable-Linux-Apps/floorp-AppImage}"
+UPINFO="gh-releases-zsync|$(echo "$REPOSITORY" | tr '/' '|')|latest|*$ARCH.AppImage.zsync"
 DESKTOP="https://github.com/flathub/one.ablaze.floorp/raw/refs/heads/master/src/one.ablaze.floorp.desktop"
 
 tarball_url=$(wget "$REPO" -O - | sed 's/[()",{} ]/\n/g' \
@@ -46,5 +60,11 @@ mv -v ./floorp ./AppDir && (
 	KEK
 )
 
-wget "$APPIMAGETOOL" -O ./build_appimage.sh
-sh build_appimage.sh OPTIMIZE_LAUNCH=1
+wget "$APPIMAGETOOL" -O ./appimagetool.AppImage
+chmod +x ./appimagetool.AppImage
+
+APPIMAGE_NAME="Floorp-${VERSION}-${ARCH}.AppImage"
+VERSION="$VERSION" \
+UPDATE_INFORMATION="$UPINFO" \
+ARCH="$ARCH" \
+./appimagetool.AppImage --appimage-extract-and-run ./AppDir "./$APPIMAGE_NAME"
