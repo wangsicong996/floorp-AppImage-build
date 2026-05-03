@@ -25,7 +25,8 @@ jobs:
 
     - name: Make AppImage
       run: |
-        sudo apt install wget tar
+        sudo apt-get update
+        sudo apt-get install -y wget tar squashfs-tools zsync desktop-file-utils
         chmod +x ./*-appimage.sh
         ./*-appimage.sh
         mkdir dist
